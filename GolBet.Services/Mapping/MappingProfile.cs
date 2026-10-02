@@ -18,5 +18,12 @@ public class MappingProfile : Profile
         CreateMap<Match, MatchDetailDto>()
             .ForMember(dto => dto.TotalBets,
                        options => options.MapFrom(match => match.Bets.Count));
+
+        // Read-only team projection
+        CreateMap<Team, TeamDto>();
+
+        // Write DTOs: both directions (load into form / apply form onto entity)
+        CreateMap<TeamFormDto, Team>().ReverseMap();
+        CreateMap<MatchFormDto, Match>().ReverseMap();
     }
 }

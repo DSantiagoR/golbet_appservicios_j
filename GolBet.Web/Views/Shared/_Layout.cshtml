@@ -27,6 +27,9 @@
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Matches" asp-action="Index">Partidos</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Teams" asp-action="Index">Equipos</a>
+                    </li>
                 </ul>
                 <!-- Aquí irá la sesión (Módulo 7) -->
             </div>
@@ -35,6 +38,13 @@
 </header>
 <div class="container">
     <main role="main" class="pb-3">
+        @if (TempData["Success"] is string message)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                ✅ @message
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
         @RenderBody()
     </main>
 </div>
@@ -49,3 +59,4 @@
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
+</html>

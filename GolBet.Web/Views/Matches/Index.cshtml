@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Partidos";
     var current = (MatchStatus?)ViewBag.CurrentStatus;
+    var currentSearch = (string?)ViewBag.CurrentSearch;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -14,102 +15,177 @@
     }
 </div>
 
-<div class="d-flex gap-2 flex-wrap mb-4">
-    <a asp-action="Index"
-       class="btn btn-sm @(current is null ? "btn-success" : "btn-outline-success")">
-        Todos
-    </a>
-    <a asp-action="Index" asp-route-status="@MatchStatus.Scheduled"
-       class="btn btn-sm @(current == MatchStatus.Scheduled ? "btn-success" : "btn-outline-success")">
-        Programados
-    </a>
-    <a asp-action="Index" asp-route-status="@MatchStatus.InProgress"
-       class="btn btn-sm @(current == MatchStatus.InProgress ? "btn-success" : "btn-outline-success")">
-        En juego
-    </a>
-    <a asp-action="Index" asp-route-status="@MatchStatus.Finished"
-       class="btn btn-sm @(current == MatchStatus.Finished ? "btn-success" : "btn-outline-success")">
-        Finalizados
-    </a>
-</div>
+@* GET search form: the URL keeps the search (/Matches?search=nacional) and
+   the hidden input keeps the active status filter *@
+<form id="search-form" asp-action="Index" method="get" class="d-flex gap-2 mb-3">
+    @if (current.HasValue)
+    {
+        <input type="hidden" name="status" value="@current" />
+    }
+    <input id="search-input" type="text" name="search" value="@currentSearch"
+           class="form-control" placeholder="Buscar equipo..." autocomplete="off" />
+    <button type="submit" class="btn btn-success">Buscar</button>
+</form>
 
-<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-@foreach (var match in Model)
-{
-    <div class="col">
-        <div class="card h-100 shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <small class="text-muted">
-                    📅 @match.Date.ToColombiaTime().ToString("ddd dd MMM · h:mm tt")
-                </small>
-                @switch (match.Status)
-                {
-                    case MatchStatus.Scheduled:
-                        <span class="badge bg-primary">Programado</span>
-                        break;
-                    case MatchStatus.InProgress:
-                        <span class="badge bg-warning text-dark">En juego</span>
-                        break;
-                    case MatchStatus.Finished:
-                        <span class="badge bg-secondary">Finalizado</span>
-                        break;
-                }
-            </div>
+@* Everything inside #board is replaced by the live search *@
+<div id="board">
 
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center text-center">
-                    <div class="w-100">
-                        <img src="@(match.HomeTeamCrestUrl ?? "https://placehold.co/60x60/e9ecef/6c757d?text=FC")"
-                             alt="@match.HomeTeamName" width="60" height="60" class="mb-1" />
-                        <div class="fw-bold small">@match.HomeTeamName</div>
-                    </div>
+    @* Status filters: each one keeps the active search *@
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        <a asp-action="Index" asp-route-search="@currentSearch"
+           class="btn btn-sm @(current is null ? "btn-success" : "btn-outline-success")">
+            Todos
+        </a>
+        <a asp-action="Index" asp-route-status="@MatchStatus.Scheduled" asp-route-search="@currentSearch"
+           class="btn btn-sm @(current == MatchStatus.Scheduled ? "btn-success" : "btn-outline-success")">
+            Programados
+        </a>
+        <a asp-action="Index" asp-route-status="@MatchStatus.InProgress" asp-route-search="@currentSearch"
+           class="btn btn-sm @(current == MatchStatus.InProgress ? "btn-success" : "btn-outline-success")">
+            En juego
+        </a>
+        <a asp-action="Index" asp-route-status="@MatchStatus.Finished" asp-route-search="@currentSearch"
+           class="btn btn-sm @(current == MatchStatus.Finished ? "btn-success" : "btn-outline-success")">
+            Finalizados
+        </a>
+    </div>
 
-                    <div class="px-3 text-nowrap">
-                        @if (match.Status == MatchStatus.Finished)
-                        {
-                            <span class="fs-3 fw-bold">@match.HomeGoals - @match.AwayGoals</span>
-                        }
-                        else
-                        {
-                            <span class="fs-4 text-muted">vs</span>
-                        }
-                    </div>
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            @if (!string.IsNullOrWhiteSpace(currentSearch))
+            {
+                <h4>No hay partidos para “@currentSearch”</h4>
+            }
+            else
+            {
+                <h4>No hay partidos para mostrar</h4>
+            }
+            <a asp-action="Index" class="btn btn-success mt-3">
+                Volver a la cartelera de partidos
+            </a>
+        </div>
+    }
 
-                    <div class="w-100">
-                        <img src="@(match.AwayTeamCrestUrl ?? "https://placehold.co/60x60?text=⚽")"
-                             alt="@match.AwayTeamName" width="60" height="60" class="mb-1" />
-                        <div class="fw-bold small">@match.AwayTeamName</div>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+    @foreach (var match in Model)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        📅 @match.Date.ToColombiaTime().ToString("ddd dd MMM · h:mm tt")
+                    </small>
+                    @switch (match.Status)
+                    {
+                        case MatchStatus.Scheduled:
+                            <span class="badge bg-primary">Programado</span>
+                            break;
+                        case MatchStatus.InProgress:
+                            <span class="badge bg-warning text-dark">En juego</span>
+                            break;
+                        case MatchStatus.Finished:
+                            <span class="badge bg-secondary">Finalizado</span>
+                            break;
+                    }
+                </div>
+
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center text-center">
+                        <div class="w-100">
+                            <img src="@(match.HomeTeamCrestUrl ?? "https://placehold.co/60x60/e9ecef/6c757d?text=FC")"
+                                 alt="@match.HomeTeamName" width="60" height="60" class="mb-1" />
+                            <div class="fw-bold small">@match.HomeTeamName</div>
+                        </div>
+
+                        <div class="px-3 text-nowrap">
+                            @if (match.Status == MatchStatus.Finished)
+                            {
+                                <span class="fs-3 fw-bold">@match.HomeGoals - @match.AwayGoals</span>
+                            }
+                            else
+                            {
+                                <span class="fs-4 text-muted">vs</span>
+                            }
+                        </div>
+
+                        <div class="w-100">
+                            <img src="@(match.AwayTeamCrestUrl ?? "https://placehold.co/60x60?text=⚽")"
+                                 alt="@match.AwayTeamName" width="60" height="60" class="mb-1" />
+                            <div class="fw-bold small">@match.AwayTeamName</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card-footer">
-                <div class="row g-2 text-center">
-                    <div class="col">
-                        <div class="border rounded py-1">
-                            <small class="text-muted d-block">1 · Local</small>
-                            <span class="fw-bold">@match.HomeOdds.ToString("0.00")</span>
+                <div class="card-footer">
+                    <div class="row g-2 text-center">
+                        <div class="col">
+                            <div class="border rounded py-1">
+                                <small class="text-muted d-block">1 · Local</small>
+                                <span class="fw-bold">@match.HomeOdds.ToString("0.00")</span>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="border rounded py-1">
+                                <small class="text-muted d-block">X · Empate</small>
+                                <span class="fw-bold">@match.DrawOdds.ToString("0.00")</span>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="border rounded py-1">
+                                <small class="text-muted d-block">2 · Visitante</small>
+                                <span class="fw-bold">@match.AwayOdds.ToString("0.00")</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="col">
-                        <div class="border rounded py-1">
-                            <small class="text-muted d-block">X · Empate</small>
-                            <span class="fw-bold">@match.DrawOdds.ToString("0.00")</span>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="border rounded py-1">
-                            <small class="text-muted d-block">2 · Visitante</small>
-                            <span class="fw-bold">@match.AwayOdds.ToString("0.00")</span>
-                        </div>
-                    </div>
+                    <a asp-action="Detail" asp-route-id="@match.Id"
+                       class="btn btn-sm btn-outline-secondary w-100 mt-2">
+                        Ver detalle
+                    </a>
                 </div>
-                <a asp-action="Detail" asp-route-id="@match.Id"
-                   class="btn btn-sm btn-outline-secondary w-100 mt-2">
-                    Ver detalle
-                </a>
             </div>
         </div>
+    }
     </div>
-}
+
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const form = document.getElementById('search-form');
+            const input = document.getElementById('search-input');
+            const board = document.getElementById('board');
+            let timer;
+            let controller;
+
+            async function refresh() {
+                // Build the same URL the GET form would produce (keeps status + search)
+                const params = new URLSearchParams(new FormData(form));
+                if (!params.get('search')) params.delete('search');
+                const query = params.toString();
+                const url = form.getAttribute('action') + (query ? '?' + query : '');
+
+                controller?.abort();                 // cancel the previous request
+                controller = new AbortController();
+
+                try {
+                    const response = await fetch(url, { signal: controller.signal });
+                    const html = await response.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                    board.innerHTML = doc.getElementById('board').innerHTML;
+                    history.replaceState(null, '', url);   // URL stays shareable / F5-safe
+                } catch (error) {
+                    if (error.name !== 'AbortError') form.submit();   // fallback: normal search
+                }
+            }
+
+            // Debounce: wait 300 ms after the last keystroke before asking the server
+            input.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(refresh, 300);
+            });
+        })();
+    </script>
+}

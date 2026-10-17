@@ -5,8 +5,8 @@ namespace GolBet.Services.Interfaces;
 
 public interface IMatchService
 {
-    /// <summary>Match board: all active matches ordered by date.</summary>
-    Task<IEnumerable<MatchDto>> GetBoardAsync(MatchStatus? status = null);
+    /// <summary>Match board: active matches ordered by date, optionally filtered by status and team search.</summary>
+    Task<IEnumerable<MatchDto>> GetBoardAsync(MatchStatus? status = null, string? search = null);
 
     /// <summary>Detail of a single match, or null if it doesn't exist.</summary>
     Task<MatchDetailDto?> GetDetailAsync(int id);

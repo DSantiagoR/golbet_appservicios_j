@@ -27,6 +27,12 @@
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Matches" asp-action="Index">Partidos</a>
                     </li>
+                    @if (User.IsInRole("Apostador"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Bets" asp-action="MyBets">Mis apuestas</a>
+                        </li>
+                    }
                     @if (User.IsInRole("Admin"))
                     {
                         <li class="nav-item">
@@ -45,6 +51,13 @@
         {
             <div class="alert alert-success alert-dismissible fade show">
                 ✅ @message
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] is string errorMessage)
+        {
+            <div class="alert alert-danger alert-dismissible fade show">
+                ⚠️ @errorMessage
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }

@@ -25,5 +25,11 @@ public class MappingProfile : Profile
         // Write DTOs: both directions (load into form / apply form onto entity)
         CreateMap<TeamFormDto, Team>().ReverseMap();
         CreateMap<MatchFormDto, Match>().ReverseMap();
+
+        // Bet: two-hop flattening by convention (MatchHomeTeamName <- Match.HomeTeam.Name);
+        // PotentialPayout is a calculation, so it needs an explicit ForMember.
+        CreateMap<Bet, BetDto>()
+            .ForMember(dto => dto.PotentialPayout,
+                       options => options.MapFrom(bet => bet.Amount * bet.OddsAtPlacement));
     }
 }
